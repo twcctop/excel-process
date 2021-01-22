@@ -14,7 +14,7 @@
     <br />
     <button v-on:click="testPythonScript">提交路径</button> -->
 
-    <div class="container">
+    <!-- <div class="container">
       {{ upload_file || "导入" }}
       <input
         type="file"
@@ -22,12 +22,11 @@
         class="upload_file"
         @change="readExcel($event)"
       />
-    </div>
+    </div> -->
 
-    <P>###############</P>
 
     <div class="container">
-      {{ upload_file || "测试导入" }}
+      {{ upload_file || "导入" }}
       <input
         type="file"
         multiple="multiple"
@@ -66,7 +65,6 @@ export default {
         console.log(file.name);
       });
 
-      /*  filereader为什么没有被执行    */
       const reader = new FileReader();
       reader.readAsBinaryString(files[0]);
       reader.onload = (ev) => {
@@ -78,53 +76,72 @@ export default {
           type: "binary",
         });
         const wsname = workbook.SheetNames[1]; //取第二张表
-         console.log("sheetname:" + wsname);
-         const ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname]); //生成json表格内容
-         console.log('wsdata')
-         console.log(ws)
-          /**
-           *   合并操作
-           */
-        
+        console.log("sheetname:" + wsname);
+        const ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname]); //生成json表格内容
+        console.log("wsdata");
+        /*(2)[{…}, {…}]0: {a1: "a2", b1: "b2", c1: "c2", __rowNum__: 1}1: {a1: "a3", b1: "b3", c1: "c3", __rowNum__: 2}length: 2__proto__: Array(0)*/
 
-          /**
-           *   导出至excel 
-           */
-         var exportData =  XLSX.utils.json_to_sheet(ws);
-         var wb = XLSX.utils.book_new(); 
-         XLSX.utils.book_append_sheet(wb, exportData, "sheet1"); 
-         const exportblob = this.workbook2blob(wb);
-         this.openDownloadDialog(exportblob,'export.xls') 
-           
+        console.log(ws);
+        /**
+         *   合并操作
+         */
+        var count = 0;
+        var resArr = [];
+        for (var i in ws) {
+          console.log(ws[i]);
+          for (var j in ws[i]) {
+            var  json={}
+            json[0]= ws[i][j]
+            count++;
+            resArr[count] = json;
+          }
+        }
+        console.log("resArr");
+        console.log(resArr);
+        /**
+         *   导出至excel
+         */
+        //  var exportData =  XLSX.utils.json_to_sheet(ws);
+        var exportData = XLSX.utils.json_to_sheet(resArr);
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, exportData, "sheet1");
+        const exportblob = this.workbook2blob(wb);
+        this.openDownloadDialog(exportblob, "export.xls");
       };
-      
-      // fileReader.onload=(ev) => {
-      //   console.log('11data');
-      //     1;
-      //     const data=  ev.target.result;
-      //     console.log('data');
-      //     console.log(data);
-      //     console.log('data');
-      //     console.log(ev);
 
-      // }
     },
     openDownloadDialog(blob, fileName) {
-    if (typeof blob == "object" && blob instanceof Blob) {
+      if (typeof blob == "object" && blob instanceof Blob) {
         blob = URL.createObjectURL(blob); // 创建blob地址
-    }
-    var aLink = document.createElement("a");
-    aLink.href = blob;
-    // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，有时候 file:///模式下不会生效
-    aLink.download = fileName || "";
-    var event;
-    if (window.MouseEvent) event = new MouseEvent("click");
-    //   移动端
-    else {
+      }
+      var aLink = document.createElement("a");
+      aLink.href = blob;
+      // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，有时候 file:///模式下不会生效
+      aLink.download = fileName || "";
+      var event;
+      if (window.MouseEvent) event = new MouseEvent("click");
+      //   移动端
+      else {
         event = document.createEvent("MouseEvents");
-        event.initMouseEvent( "click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null );
-    }
-    aLink.dispatchEvent(event);
+        event.initMouseEvent(
+          "click",
+          true,
+          false,
+          window,
+          0,
+          0,
+          0,
+          0,
+          0,
+          false,
+          false,
+          false,
+          false,
+          0,
+          null
+        );
+      }
+      aLink.dispatchEvent(event);
     },
     submit_form() {
       // 给后端发送请求，更新数据
@@ -181,29 +198,28 @@ export default {
       fileReader.readAsBinaryString(files[0]);
     },
 
-
-    workbook2blob(workbook){
-    // 生成excel的配置项
-    var wopts = {
+    workbook2blob(workbook) {
+      // 生成excel的配置项
+      var wopts = {
         // 要生成的文件类型
         bookType: "xlsx",
         // // 是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
         bookSST: false,
-        type: "binary"
-    };
-    var wbout = XLSX.write(workbook, wopts);
-    // 将字符串转ArrayBuffer
-    function s2ab(s) {
+        type: "binary",
+      };
+      var wbout = XLSX.write(workbook, wopts);
+      // 将字符串转ArrayBuffer
+      function s2ab(s) {
         var buf = new ArrayBuffer(s.length);
         var view = new Uint8Array(buf);
         for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
         return buf;
-    }
-    var blob = new Blob([s2ab(wbout)], {
-        type: "application/octet-stream"
-    });
-       return blob;
-    }
+      }
+      var blob = new Blob([s2ab(wbout)], {
+        type: "application/octet-stream",
+      });
+      return blob;
+    },
   },
 };
 </script>
