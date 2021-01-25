@@ -61,12 +61,15 @@ export default {
       console.log("files的属性为 ");
       console.log(files);
 
-      files.forEach((file) => {
-        console.log(file.name);
-      });
+      // files.forEach((file) => {
+      //   console.log(file.name);
+      // });
 
       const reader = new FileReader();
+      console.log('reader');
+
       reader.readAsBinaryString(files[0]);
+      console.log('readAsBinary');
       reader.onload = (ev) => {
         1;
         console.log("test##  reader.onload ");
