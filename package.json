@@ -16,7 +16,8 @@
     "core-js": "^3.6.5",
     "jsexecpy": "^1.1.0",
     "vue": "^2.6.11",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.16.9",
+    "yarn": "^1.22.10"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
