@@ -1,30 +1,6 @@
 
 <template>
   <div id="app">
-    <!-- <p>test</p>
-        <a>My first Vue app</a>
-        <br>
-      <a>  msg is  {{ message }}   </a> -->
-    <!-- <br />
-    <br />
-    <br />
-    第一个excel <input v-model="excel1" />
-    <br />
-    第二个excel <input v-model="excel2" />
-    <br />
-    <button v-on:click="testPythonScript">提交路径</button> -->
-
-    <!-- <div class="container">
-      {{ upload_file || "导入" }}
-      <input
-        type="file"
-        accept=".xls,.xlsx"
-        class="upload_file"
-        @change="readExcel($event)"
-      />
-    </div> -->
-
-
     <div class="container">
       {{ upload_file || "导入" }}
       <input
@@ -56,64 +32,67 @@ export default {
     };
   },
   methods: {
+    /**
+     * 读取excel文件
+     */
     testReadExcel(e) {
+      var count = 0;
+      var resArr = [];
+      var exportCount =0;
       const files = e.target.files;
-      console.log("files的属性为 ");
-      console.log(files);
+      console.log("执行testReadExcel ");
+      for (var k =0; k<files.length; k++) {
+        const reader = new FileReader();
+        // reader回调函数
+        reader.onload = (ev) => {
+          console.log("reader回调函数");
+          1;
+          const data = ev.target.result;
+          const workbook = XLSX.read(data, {
+            type: "binary",
+          });
+          const wsname = workbook.SheetNames[1]; //取第二张表
+          const ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname]); //生成json表格内容
+          /*(2)[{…}, {…}]0: {a1: "a2", b1: "b2", c1: "c2", __rowNum__: 1}1: {a1: "a3", b1: "b3", c1: "c3", __rowNum__: 2}length: 2__proto__: Array(0)*/
+          /**
+           *   合并操作
+           */
 
-      // files.forEach((file) => {
-      //   console.log(file.name);
-      // });
-
-      const reader = new FileReader();
-      console.log('reader');
-
-      reader.readAsBinaryString(files[0]);
-      console.log('readAsBinary');
-      reader.onload = (ev) => {
-        1;
-        console.log("test##  reader.onload ");
-        console.log(ev);
-        const data = ev.target.result;
-        const workbook = XLSX.read(data, {
-          type: "binary",
-        });
-        const wsname = workbook.SheetNames[1]; //取第二张表
-        console.log("sheetname:" + wsname);
-        const ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname]); //生成json表格内容
-        console.log("wsdata");
-        /*(2)[{…}, {…}]0: {a1: "a2", b1: "b2", c1: "c2", __rowNum__: 1}1: {a1: "a3", b1: "b3", c1: "c3", __rowNum__: 2}length: 2__proto__: Array(0)*/
-
-        console.log(ws);
-        /**
-         *   合并操作
-         */
-        var count = 0;
-        var resArr = [];
-        for (var i in ws) {
-          console.log(ws[i]);
-          for (var j in ws[i]) {
-            var  json={}
-            json[0]= ws[i][j]
-            count++;
-            resArr[count] = json;
+          for (var i in ws) {
+            for (var j in ws[i]) {
+              var json = {};
+              json[0] = ws[i][j];
+              count++;
+              resArr[count] = json;
+            }
           }
-        }
+          /**
+           *  防止回调函数多次执行
+           **/
 
-        console.log("resArr");
-        console.log(resArr);
-        /**
-         *   导出至excel
-         */
-        //  var exportData =  XLSX.utils.json_to_sheet(ws);
-        var exportData = XLSX.utils.json_to_sheet(resArr);
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, exportData, "sheet1");
-        const exportblob = this.workbook2blob(wb);
-        this.openDownloadDialog(exportblob, "export.xls");
-      };
+          exportCount++;
+          if (exportCount==files.length){
+            this.exportData(resArr);
+          }
 
+        };
+        reader.readAsBinaryString(files[k]);
+      }
     },
+    exportData(resArr){
+      /**
+       *   导出至excel
+       */
+      console.log("导出至excel");
+      console.log(resArr);
+      var exportData = XLSX.utils.json_to_sheet(resArr);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, exportData, "sheet1");
+      const exportblob = this.workbook2blob(wb);
+        console.log("exportblob");
+      console.log(exportblob);
+      this.openDownloadDialog(exportblob, "export.xls");
+    }, 
     openDownloadDialog(blob, fileName) {
       if (typeof blob == "object" && blob instanceof Blob) {
         blob = URL.createObjectURL(blob); // 创建blob地址
